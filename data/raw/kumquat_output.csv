@@ -1,0 +1,14 @@
+﻿record_file_name;timestamp;image_format;image_path;country;label_type;label_size;label_coordinates;version
+hungary_debrecen_20220222;10;v1;my_server/my_folder/hungary_debrecen_20220222_10;Hungary;car;2;"{""x0"": 34.2175, ""y0"": 14.5025, ""x1"": 34.89140625, ""y1"": 94.3651125}";1
+hungary_debrecen_20220222;10;v1;my_server/my_folder/hungary_debrecen_20220222_10;Hungary;truck;1;"{""x0"": 68.75, ""y0"": 90.625, ""x1"": 869.0625, ""y1"": 4.875}";1
+hungary_debrecen_20220222;10;v1;my_server/my_folder/hungary_debrecen_20220222_10;Hungary;pedestrian;0,5;"{""x0"": 3.875, ""y0"": 14.25, ""x1"": 34.25, ""y1"": 1.75}";1
+hungary_debrecen_20220222;20;v1;my_server/my_folder/hungary_debrecen_20220222_20;Hungary;stop_sign;0,1;"{""x0"": 34.875, ""y0"": 1.25, ""x1"": 3.0625, ""y1"": 159.875}";1
+hungary_debrecen_20220222;20;v1;my_server/my_folder/hungary_debrecen_20220222_20;Hungary;traffic_light;0,1;"{""x0"": 343.875, ""y0"": 14.25, ""x1"": 34.140625, ""y1"": 159.46875}";1
+hungary_pecs_20220216;10;v1;my_server/my_folder/hungary_pecs_20220216_10;Hungary;pedestrian;0,5;"{""x0"": 3430.75, ""y0"": 1401.5, ""x1"": 3491.25, ""y1"": 1594.5}";1
+hungary_pecs_20220216;20;v1;my_server/my_folder/hungary_pecs_20220216_20;Hungary;stop_sign;0,1;"{""x0"": 34.75, ""y0"": 14.625, ""x1"": 34.140625, ""y1"": 159.875}";1
+hungary_pecs_20220216;30;v1;my_server/my_folder/hungary_pecs_20220216_30;Hungary;traffic_light;0,1;"{""x0"": 34.2175, ""y0"": 14.5025, ""x1"": 34.89140625, ""y1"": 94.3651125}";1
+germany_berlin_20201010;10;v1;my_server/my_folder/germany_berlin_20201010_10;Germany;car;2;"{""x0"": 68.75, ""y0"": 90.625, ""x1"": 869.0625, ""y1"": 4.875}";1
+germany_berlin_20201010;10;v1;my_server/my_folder/germany_berlin_20201010_10;Germany;truck;1;"{""x0"": 3.875, ""y0"": 14.25, ""x1"": 34.25, ""y1"": 1.75}";1
+germany_berlin_20201010;20;v1;my_server/my_folder/germany_berlin_20201010_20;Germany;pedestrian;0,5;"{""x0"": 34.875, ""y0"": 1.25, ""x1"": 3.0625, ""y1"": 159.875}";1
+germany_berlin_20201010;20;v1;my_server/my_folder/germany_berlin_20201010_20;Germany;stop_sign;0,1;"{""x0"": 343.875, ""y0"": 14.25, ""x1"": 34.140625, ""y1"": 159.46875}";1
+germany_berlin_20201010;30;v1;my_server/my_folder/germany_berlin_20201010_30;Germany;traffic_light;0,1;"{""x0"": 3430.75, ""y0"": 1401.5, ""x1"": 3491.25, ""y1"": 1594.5}";1
