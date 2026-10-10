@@ -1,19 +1,24 @@
 import csv
 from pathlib import Path
+
 from src.aumovio_pipeline.transformations import map_country
 
-#function to load csv files into the database
+
+# Load a CSV file and return its rows as dictionaries
 def load_csv(file_path: str | Path) -> list[dict[str, str]]:
     with open(file_path, mode="r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file, delimiter=";")
         return list(reader)
-    
-#function to load images into the database   
+
+
+# Load images, ignoring records whose primary key already exists
 def load_images(connection, rows):
+    inserted = 0
+
     for row in rows:
-        connection.execute(
+        cursor = connection.execute(
             """
-            INSERT INTO images (
+            INSERT OR IGNORE INTO images (
                 record_file_name,
                 timestamp,
                 image_format,
@@ -31,11 +36,66 @@ def load_images(connection, rows):
             ),
         )
 
+        inserted += cursor.rowcount
+
     connection.commit()
-    
-#function to load labels into the database   
+    return inserted
+
+
+# Load labels: insert missing identities or update when a newer version arrives
 def load_labels(connection, rows):
+    inserted = 0
+    updated = 0
+
     for row in rows:
+        record_file_name = row["record_file_name"]
+        timestamp = int(row["timestamp"])
+        label_coordinates = row["label_coordinates"]
+        incoming_version = int(row["version"])
+        label_size = float(row["label_size"].replace(",", "."))
+
+        existing = connection.execute(
+            """
+            SELECT version
+            FROM labels
+            WHERE record_file_name = ?
+              AND timestamp = ?
+              AND label_coordinates = ?
+            ORDER BY version DESC
+            LIMIT 1
+            """,
+            (record_file_name, timestamp, label_coordinates),
+        ).fetchone()
+
+        if existing:
+            current_version = existing[0]
+
+            if incoming_version <= current_version:
+                continue
+
+            connection.execute(
+                """
+                UPDATE labels
+                SET label_type = ?,
+                    label_size = ?,
+                    version = ?
+                WHERE record_file_name = ?
+                  AND timestamp = ?
+                  AND label_coordinates = ?
+                """,
+                (
+                    row["label_type"],
+                    label_size,
+                    incoming_version,
+                    record_file_name,
+                    timestamp,
+                    label_coordinates,
+                ),
+            )
+
+            updated += 1
+            continue
+
         connection.execute(
             """
             INSERT INTO labels (
@@ -49,18 +109,26 @@ def load_labels(connection, rows):
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
-                row["record_file_name"],
-                int(row["timestamp"]),
+                record_file_name,
+                timestamp,
                 row["label_type"],
-                float(row["label_size"].replace(",", ".")),
-                row["label_coordinates"],
-                int(row["version"]),
+                label_size,
+                label_coordinates,
+                incoming_version,
             ),
         )
 
+        inserted += 1
+
     connection.commit()
-    
-#function to split the rows into two lists, one for images and one for labels   
+
+    print(f"New labels inserted: {inserted}")
+    print(f"Existing labels updated: {updated}")
+
+    return inserted
+
+
+# Split the combined Kumquat rows into image rows and label rows
 def split_kumquat_rows(rows):
     image_rows = []
     label_rows = []
@@ -85,7 +153,8 @@ def split_kumquat_rows(rows):
 
     return image_rows, label_rows
 
-# function to load images into the database with delta insert (insert only if not exists)
+
+# Insert only new images from the delta dataset
 def load_images_delta(connection, rows):
     inserted = 0
 
@@ -115,28 +184,59 @@ def load_images_delta(connection, rows):
     connection.commit()
     return inserted
 
-# function to load labels into the database with delta insert (insert only if not exists)
+
+# Insert new logical labels or update existing labels if a newer version arrives
 def load_labels_delta(connection, rows):
     inserted = 0
+    updated = 0
 
     for row in rows:
+        record_file_name = row["record_file_name"]
+        timestamp = int(row["timestamp"])
+        label_coordinates = row["label_coordinates"]
+        incoming_version = int(row["version"])
+        label_size = float(row["label_size"].replace(",", "."))
+
         existing = connection.execute(
             """
-            SELECT 1
+            SELECT version
             FROM labels
             WHERE record_file_name = ?
               AND timestamp = ?
               AND label_coordinates = ?
+            ORDER BY version DESC
             LIMIT 1
             """,
-            (
-                row["record_file_name"],
-                int(row["timestamp"]),
-                row["label_coordinates"],
-            ),
+            (record_file_name, timestamp, label_coordinates),
         ).fetchone()
 
         if existing:
+            current_version = existing[0]
+
+            if incoming_version <= current_version:
+                continue
+
+            connection.execute(
+                """
+                UPDATE labels
+                SET label_type = ?,
+                    label_size = ?,
+                    version = ?
+                WHERE record_file_name = ?
+                  AND timestamp = ?
+                  AND label_coordinates = ?
+                """,
+                (
+                    row["label_type"],
+                    label_size,
+                    incoming_version,
+                    record_file_name,
+                    timestamp,
+                    label_coordinates,
+                ),
+            )
+
+            updated += 1
             continue
 
         connection.execute(
@@ -152,16 +252,20 @@ def load_labels_delta(connection, rows):
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
-                row["record_file_name"],
-                int(row["timestamp"]),
+                record_file_name,
+                timestamp,
                 row["label_type"],
-                float(row["label_size"].replace(",", ".")),
-                row["label_coordinates"],
-                int(row["version"]),
+                label_size,
+                label_coordinates,
+                incoming_version,
             ),
         )
 
         inserted += 1
 
     connection.commit()
+
+    print(f"New Kumquat labels inserted: {inserted}")
+    print(f"Existing Kumquat labels updated: {updated}")
+
     return inserted
