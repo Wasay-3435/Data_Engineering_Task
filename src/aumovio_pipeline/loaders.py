@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+from src.aumovio_pipeline.transformations import map_country
 
 #function to load csv files into the database
 def load_csv(file_path: str | Path) -> list[dict[str, str]]:
@@ -26,7 +27,7 @@ def load_images(connection, rows):
                 int(row["timestamp"]),
                 row["image_format"],
                 row["image_path"],
-                row["country"],
+                map_country(row["country"]),
             ),
         )
 
@@ -83,3 +84,84 @@ def split_kumquat_rows(rows):
         })
 
     return image_rows, label_rows
+
+# function to load images into the database with delta insert (insert only if not exists)
+def load_images_delta(connection, rows):
+    inserted = 0
+
+    for row in rows:
+        cursor = connection.execute(
+            """
+            INSERT OR IGNORE INTO images (
+                record_file_name,
+                timestamp,
+                image_format,
+                image_path,
+                country
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                row["record_file_name"],
+                int(row["timestamp"]),
+                row["image_format"],
+                row["image_path"],
+                map_country(row["country"]),
+            ),
+        )
+
+        inserted += cursor.rowcount
+
+    connection.commit()
+    return inserted
+
+# function to load labels into the database with delta insert (insert only if not exists)
+def load_labels_delta(connection, rows):
+    inserted = 0
+
+    for row in rows:
+        existing = connection.execute(
+            """
+            SELECT 1
+            FROM labels
+            WHERE record_file_name = ?
+              AND timestamp = ?
+              AND label_coordinates = ?
+            LIMIT 1
+            """,
+            (
+                row["record_file_name"],
+                int(row["timestamp"]),
+                row["label_coordinates"],
+            ),
+        ).fetchone()
+
+        if existing:
+            continue
+
+        connection.execute(
+            """
+            INSERT INTO labels (
+                record_file_name,
+                timestamp,
+                label_type,
+                label_size,
+                label_coordinates,
+                version
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                row["record_file_name"],
+                int(row["timestamp"]),
+                row["label_type"],
+                float(row["label_size"].replace(",", ".")),
+                row["label_coordinates"],
+                int(row["version"]),
+            ),
+        )
+
+        inserted += 1
+
+    connection.commit()
+    return inserted
