@@ -1,2 +1,5 @@
-# No third-party dependencies required.
-# Uses Python standard-library modules and SQLite.
+# AUMOVIO Data Engineering Task
+# Runtime: Python 3.11+
+# Database: SQLite (included with Python)
+# All current dependencies use the Python standard library.
+# No third-party packages are required.
