@@ -115,3 +115,9 @@ The integration check uses a separate test database to verify that rerunning the
 
 Database files and Python virtual-environment files should remain excluded from version control. The input CSV files are retained under `data/raw/`.
 
+## Solution Notes
+
+The `docs/notes/handwritten_solution_notes.pdf` file contains
+my handwritten notes documenting my understanding of the task,
+the approach taken, and the reasoning behind the solution.
+
